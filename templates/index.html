@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Customer Insight Analyzer</title>
+
+  <style>
+    body {
+      font-family: Poppins, Arial, sans-serif;
+      background: #f3f6fb;
+      margin: 0;
+      padding: 0;
+    }
+
+    header {
+      background: #2563eb;
+      color: white;
+      padding: 20px;
+      text-align: center;
+      font-size: 28px;
+      font-weight: bold;
+      box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 40px auto;
+      background: white;
+      padding: 30px;
+      border-radius: 16px;
+      box-shadow: 0 3px 15px rgba(0, 0, 0, 0.15);
+    }
+
+    textarea {
+      width: 100%;
+      height: 150px;
+      padding: 15px;
+      font-size: 16px;
+      border-radius: 12px;
+      border: 1px solid #cbd5e1;
+      outline: none;
+      resize: none;
+    }
+
+    textarea:focus {
+      border-color: #2563eb;
+      box-shadow: 0 0 4px rgba(37, 99, 235, .5);
+    }
+
+    .btn {
+      background: #2563eb;
+      color: white;
+      padding: 12px 20px;
+      border-radius: 12px;
+      border: none;
+      cursor: pointer;
+      font-size: 18px;
+      margin-top: 15px;
+      transition: 0.3s;
+    }
+
+    .btn:hover {
+      background: #1e4eca;
+    }
+
+    .result-box {
+      margin-top: 30px;
+      padding: 20px;
+      border-radius: 12px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+    }
+
+    .title {
+      font-size: 22px;
+      font-weight: bold;
+      margin-bottom: 10px;
+      color: #1e293b;
+    }
+
+    .loading {
+      color: #2563eb;
+      font-size: 18px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    Customer Insight Analyzer
+  </header>
+
+  <div class="container">
+    <h2>Enter Customer Reviews</h2>
+    <p>Paste multiple customer reviews (one per line) and click **Analyze**.</p>
+
+    <textarea id="reviewsInput" placeholder="Example:
+The product arrived late.
+Amazing quality, I love it!
+Service was slow and disappointing."></textarea>
+
+    <button class="btn" onclick="analyzeReviews()">Analyze Reviews</button>
+
+    <div id="result" class="result-box" style="display:none;"></div>
+  </div>
+
+  <script>
+    async function analyzeReviews() {
+      const input = document.getElementById("reviewsInput").value.trim();
+      const resultBox = document.getElementById("result");
+
+      if (!input) {
+        alert("Please enter reviews before analyzing.");
+        return;
+      }
+
+      resultBox.style.display = "block";
+      resultBox.innerHTML = `<p class="loading">Analyzing reviews... Please wait.</p>`;
+
+      try {
+        const response = await fetch("http://localhost:8000/analyze", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            reviews: input.split("\n").filter(r => r.trim() !== "")
+          })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.detail || "API Error");
+        }
+
+        resultBox.innerHTML = `
+          <div class="title">✨ Analysis Results</div>
+          <p><strong>Overall Sentiment:</strong> ${data.overall_sentiment}</p>
+          <p><strong>Sentiment Score:</strong> ${JSON.stringify(data.sentiment_score)}</p>
+          <p><strong>Key Themes:</strong> ${data.key_themes.join(", ")}</p>
+          <p><strong>Actionable Feedback:</strong> ${data.actionable_feedback}</p>
+        `;
+      } catch (error) {
+        resultBox.innerHTML = `<p style="color:red">Error: ${error.message}</p>`;
+      }
+    }
+  </script>
+
+</body>
+</html>
